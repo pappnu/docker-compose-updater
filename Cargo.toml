@@ -1,0 +1,17 @@
+[package]
+name = "docker-compose-updater"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+lettre = { version = "0", features = [
+	"tokio1",
+	"tokio1-native-tls",
+	"smtp-transport",
+	"serde",
+] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["full"] }
+yaml_serde = "0.10"

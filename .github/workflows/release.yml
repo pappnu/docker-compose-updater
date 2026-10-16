@@ -1,0 +1,74 @@
+name: Release
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set release metadata
+        id: release_metadata
+        run: |
+          now="$(date -u +'%Y-%m-%d %H:%M:%S') UTC"
+          now_path="$(date -u +'%Y-%m-%dT%H%M%SZ')"
+          short_sha="${GITHUB_SHA:0:7}"
+          binary_name="docker-compose-updater_${now_path}-${short_sha}"
+          deb_name="docker-compose-updater_${now_path}-${short_sha}.deb"
+          {
+            echo "now=${now}"
+            echo "now_path=${now_path}"
+            echo "short_sha=${short_sha}"
+            echo "binary_name=${binary_name}"
+            echo "deb_name=${deb_name}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Run tests
+        run: cargo test
+
+      - name: Install cargo-deb
+        run: cargo install cargo-deb
+
+      - name: Build release binary
+        run: cargo build --release
+
+      - name: Rename release binary
+        run: cp target/release/docker-compose-updater "${{ steps.release_metadata.outputs.binary_name }}"
+
+      - name: Build Debian package
+        run: |
+          cargo deb --no-build
+          mv target/debian/docker-compose-updater_*.deb "${{ steps.release_metadata.outputs.deb_name }}"
+
+      - name: Create release tag
+        run: |
+          git tag -f "${{ steps.release_metadata.outputs.now_path }}"
+          git push origin "${{ steps.release_metadata.outputs.now_path }}"
+
+      - name: Release
+        uses: softprops/action-gh-release@v3
+        with:
+          name: "${{ steps.release_metadata.outputs.now }} ${{ steps.release_metadata.outputs.short_sha }}"
+          files: |
+            ${{ steps.release_metadata.outputs.binary_name }}
+            ${{ steps.release_metadata.outputs.deb_name }}
+          tag_name: ${{ steps.release_metadata.outputs.now_path }}
+          fail_on_unmatched_files: true
+          generate_release_notes: true
+
+      - name: Delete old releases
+        run: gh release list --json tagName --jq '.[] | .tagName' | tail -n+7 | xargs -r -n 1 gh release delete --yes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
