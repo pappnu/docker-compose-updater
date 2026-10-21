@@ -5,9 +5,12 @@ edition = "2024"
 
 [dependencies]
 clap = { version = "4", features = ["derive"] }
-lettre = { version = "0", features = [
+lettre = { version = "0", default-features = false, features = [
+	"builder",
 	"tokio1",
-	"tokio1-native-tls",
+	"tokio1-rustls",
+	"rustls-platform-verifier",
+	"aws-lc-rs",
 	"smtp-transport",
 	"serde",
 ] }
