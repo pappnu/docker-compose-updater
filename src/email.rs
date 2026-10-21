@@ -1,6 +1,5 @@
 use lettre::{
-    AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor,
-    message::{Mailbox, header::ContentType},
+    Address, AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor, message::{Mailbox, header::ContentType},
 };
 use tokio::task::JoinHandle;
 
@@ -13,10 +12,12 @@ pub fn queue(
 ) -> JoinHandle<Result<(), String>> {
     tokio::spawn(async move {
         let from: Mailbox = from
-            .parse()
+            .parse::<Address>()
+            .map(|address| Mailbox::new(None, address))
             .map_err(|error| format!("Invalid sender address: {error}"))?;
         let to: Mailbox = to
-            .parse()
+            .parse::<Address>()
+            .map(|address| Mailbox::new(None, address))
             .map_err(|error| format!("Invalid recipient address: {error}"))?;
         let message = Message::builder()
             .from(from)
