@@ -60,7 +60,7 @@ jobs:
         run: cargo build --release --target=aarch64-unknown-linux-gnu
 
       - name: Rename release binary
-        run: cp target/release/docker-compose-updater "${{ steps.release_metadata.outputs.binary_name }}"
+        run: cp target/aarch64-unknown-linux-gnu/release/docker-compose-updater "${{ steps.release_metadata.outputs.binary_name }}"
 
       - name: Build Debian package
         run: |
