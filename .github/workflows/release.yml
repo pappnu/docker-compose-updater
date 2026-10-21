@@ -24,16 +24,21 @@ jobs:
         run: |
           now="$(date -u +'%Y-%m-%d %H:%M:%S') UTC"
           now_path="$(date -u +'%Y-%m-%dT%H%M%SZ')"
+          now_version="$(date -u +'%Y%m%d%H%M%S')"
           short_sha="${GITHUB_SHA:0:7}"
           binary_name="docker-compose-updater_${now_path}-${short_sha}"
           deb_name="docker-compose-updater_${now_path}-${short_sha}.deb"
           {
             echo "now=${now}"
             echo "now_path=${now_path}"
+            echo "now_version=${now_version}"
             echo "short_sha=${short_sha}"
             echo "binary_name=${binary_name}"
             echo "deb_name=${deb_name}"
           } >> "$GITHUB_OUTPUT"
+
+      - name: Override package version
+        run: sed -i "0,/^version = .*/s//version = \"0.${{ steps.release_metadata.outputs.now_version }}.0+${{ steps.release_metadata.outputs.short_sha }}\"/" Cargo.toml
 
       - name: Run tests
         run: cargo test
@@ -42,7 +47,7 @@ jobs:
         run: cargo install cargo-deb
 
       - name: Build release binary
-        run: cargo build --release
+        run: cargo build --release --target=aarch64-unknown-linux-gnu
 
       - name: Rename release binary
         run: cp target/release/docker-compose-updater "${{ steps.release_metadata.outputs.binary_name }}"
