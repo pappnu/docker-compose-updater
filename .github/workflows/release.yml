@@ -64,7 +64,7 @@ jobs:
 
       - name: Build Debian package
         run: |
-          cargo deb --no-build --target=aarch64-unknown-linux-gnu
+          cargo deb --no-build --target=aarch64-unknown-linux-gnu --maintainer="${GITHUB_ACTOR} <${GITHUB_ACTOR_ID}+${GITHUB_ACTOR}@users.noreply.github.com>"
           mv target/debian/docker-compose-updater_*.deb "${{ steps.release_metadata.outputs.deb_name }}"
 
       - name: Create release tag
